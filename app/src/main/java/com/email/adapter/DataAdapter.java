@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import com.android.framewok.base.ListBaseAdapter;
 import com.email.R;
+import com.email.bean.ItemModel;
 
 
 public class DataAdapter extends ListBaseAdapter<ItemModel> {
