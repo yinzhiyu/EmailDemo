@@ -30,10 +30,13 @@ import java.util.List;
 
 import javax.mail.MessagingException;
 
+import com.email.adapter.InboxAdapter;
 import com.email.app.MyApplication;
 import com.email.bean.Email;
 import com.email.service.MailHelper;
 import com.email.service.MailReceiver;
+import com.github.jdsjlzx.recyclerview.LRecyclerView;
+import com.github.jdsjlzx.recyclerview.LRecyclerViewAdapter;
 
 public class MailBoxActivity extends Activity {
 
@@ -42,7 +45,10 @@ public class MailBoxActivity extends Activity {
     private String type;
     private int status;
     private MyAdapter myAdapter;
-    private ListView lv_box;
+    private InboxAdapter mInboxAdapter;
+    private LRecyclerViewAdapter mLRecyclerViewAdapter;
+    private LRecyclerView lv_box;
+    private LRecyclerView mRecyclerView = findViewById(R.id.mRecyclerView);
     private List<MailReceiver> mailReceivers;
     private ProgressDialog dialog;
     private Uri uri=Uri.parse("content://com.emailstatusprovider");
@@ -108,10 +114,15 @@ public class MailBoxActivity extends Activity {
     }
 
     private void initView() {
-        lv_box = (ListView) findViewById(R.id.lv_box);
-        myAdapter = new MyAdapter();
-        lv_box.setAdapter(myAdapter);
-        
+        mRecyclerView = findViewById(R.id.mRecyclerView);
+//        myAdapter = new MyAdapter();
+//        lv_box.setAdapter(myAdapter);
+        mInboxAdapter = new InboxAdapter(this);
+//        mInboxAdapter.setData(dataList);
+
+        mLRecyclerViewAdapter = new LRecyclerViewAdapter(mInboxAdapter);
+        mRecyclerView.setAdapter(mLRecyclerViewAdapter);
+
         dialog=new ProgressDialog(this);
         dialog.setMessage("正加载");
         dialog.show();
@@ -196,6 +207,7 @@ public class MailBoxActivity extends Activity {
      * @param mails
      */
     private void getAllMails(List<MailReceiver> mails) {
+        int count = mails.size();
         for (MailReceiver mailReceiver : mails) {
             Email email = new Email();
             try {

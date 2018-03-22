@@ -28,4 +28,5 @@
     <string name="constant">联系人</string>
     <string name="choose">确定</string>
     <string name="caogaoxiang">草稿箱</string>
+    <string name="appbar_scrolling_view_behavior">...</string>
 </resources>

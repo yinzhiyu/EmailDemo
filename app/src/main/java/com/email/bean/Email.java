@@ -12,12 +12,6 @@ package com.email.bean;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-/**
- * @类名 Email
- * @作者 YULIANGMAX
- * @日期 2013-4-15
- * @版本 1.0
- */
 public class Email implements Serializable {
 
     private static final long serialVersionUID = 1L;

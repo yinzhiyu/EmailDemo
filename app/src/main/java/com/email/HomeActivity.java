@@ -59,7 +59,7 @@ public class HomeActivity extends Activity {
 			public boolean onChildClick(ExpandableListView parent, View v,
 					int groupPosition, int childPosition, long id) {
 				//可在这里做点击事件
-				if(groupPosition==0&&childPosition==1){
+				if(groupPosition==0&&childPosition==1){//添加联系人
 					Builder builder=new Builder(HomeActivity.this);
 					builder.setTitle("添加联系人");
 					
@@ -76,13 +76,13 @@ public class HomeActivity extends Activity {
 					});
 					builder.setNegativeButton("取消", null);
 					builder.show();
-				}else if(groupPosition==0&&childPosition==0){
+				}else if(groupPosition==0&&childPosition==0){//联系人列表
 					Intent intent=new Intent(HomeActivity.this, MailConstactsActivity.class);
 					startActivity(intent);
-				}else if(groupPosition==1&&childPosition==0){
+				}else if(groupPosition==1&&childPosition==0){//新邮件
 					Intent intent=new Intent(HomeActivity.this, MailEditActivity.class);
 					startActivity(intent);
-				}else if(groupPosition==1&&childPosition==1){
+				}else if(groupPosition==1&&childPosition==1){//草稿箱
 					Intent intent=new Intent(HomeActivity.this, MailCaogaoxiangActivity.class);
 					startActivity(intent);
 				}else if(groupPosition==2&&childPosition==0){
