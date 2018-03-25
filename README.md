@@ -1,3 +1,2 @@
 # EmailDemo
-基于贝叶斯算法实现Android邮件过滤
 正在开发中...
