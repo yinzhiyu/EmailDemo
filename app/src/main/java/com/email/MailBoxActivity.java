@@ -49,7 +49,7 @@ public class MailBoxActivity extends Activity {
     private DataAdapter mDataAdapter;
     private LRecyclerViewAdapter mLRecyclerViewAdapter;
     private LRecyclerView lv_box;
-    private LRecyclerView mRecyclerView = findViewById(R.id.mRecyclerView);
+    private LRecyclerView mRecyclerView;
     private List<MailReceiver> mailReceivers;
     private ProgressDialog dialog;
     private Uri uri=Uri.parse("content://com.emailstatusprovider");
