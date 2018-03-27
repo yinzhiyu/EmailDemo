@@ -10,27 +10,29 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.BaseAdapter;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.email.adapter.DataAdapter;
+import com.email.adapter.SampleFooter;
 import com.email.app.MyApplication;
 import com.email.bean.Email;
 import com.email.bean.ItemModel;
 import com.email.service.MailHelper;
 import com.email.service.MailReceiver;
-import com.github.jdsjlzx.interfaces.OnLoadMoreListener;
-import com.github.jdsjlzx.interfaces.OnNetWorkErrorListener;
+import com.github.jdsjlzx.ItemDecoration.DividerDecoration;
+import com.github.jdsjlzx.interfaces.OnItemClickListener;
 import com.github.jdsjlzx.interfaces.OnRefreshListener;
 import com.github.jdsjlzx.recyclerview.LRecyclerView;
 import com.github.jdsjlzx.recyclerview.LRecyclerViewAdapter;
-import com.github.jdsjlzx.recyclerview.ProgressStyle;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -54,7 +56,7 @@ public class MailBoxActivity extends Activity {
     private ProgressDialog dialog;
     private Uri uri=Uri.parse("content://com.emailstatusprovider");
     private List<String> messageids;
-
+    private LinearLayout empty_view;
     private int totalPage;//邮件总数
 
 
@@ -63,6 +65,7 @@ public class MailBoxActivity extends Activity {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 			case 0:
+                dialog.dismiss();
                 mDataAdapter.notifyDataSetChanged();
                 break;
                 case 1:
@@ -136,111 +139,193 @@ public class MailBoxActivity extends Activity {
 //    }
     private void initView() {
         mRecyclerView = findViewById(R.id.mRecyclerView);
-//        myAdapter = new MyAdapter();
-//        lv_box.setAdapter(myAdapter);
+        empty_view = findViewById(R.id.empty_view);
+        requestData();
 
-        //关于添加分割线
-//        DividerDecoration divider = new DividerDecoration.Builder(this,mLRecyclerViewAdapter)
-//                .setHeight(R.dimen.default_divider_height)
-//                .setPadding(R.dimen.default_divider_padding)
-//                .setColorResource(R.color.colorAccent)
-//                .build();
-//        mRecyclerView.addItemDecoration(divider);
+    }
 
-        mRecyclerView.setRefreshProgressStyle(ProgressStyle.BallSpinFadeLoader); //设置下拉刷新Progress的样式
-//        mRecyclerView.setArrowImageView(R.drawable.iconfont_downgrey);  //设置下拉刷新箭头
-        mRecyclerView.setLoadingMoreProgressStyle(ProgressStyle.BallSpinFadeLoader);
-        //设置头部加载颜色
-        mRecyclerView.setHeaderViewColor(R.color.colorAccent, R.color.dark, android.R.color.white);
-//设置底部加载颜色
-        mRecyclerView.setFooterViewColor(R.color.colorAccent, R.color.dark, android.R.color.white);
-//设置底部加载文字提示
-        mRecyclerView.setFooterViewHint("拼命加载中", "已经全部为你呈现了", "网络不给力啊，点击再试一次吧");
-        /**
-         * onScrollUp()——RecyclerView向上滑动的监听事件；
-         onScrollDown()——RecyclerView向下滑动的监听事件；
-         onScrolled()——RecyclerView正在滚动的监听事件；
-         onScrollStateChanged(int state)——RecyclerView正在滚动的监听事件；
-         */
-        mRecyclerView.setLScrollListener(new LRecyclerView.LScrollListener() {
-            @Override
-            public void onScrollUp() {
-
-            }
-
-            @Override
-            public void onScrollDown() {
-
-            }
-
-            @Override
-            public void onScrolled(int distanceX, int distanceY) {
-
-            }
-
-            @Override
-            public void onScrollStateChanged(int state) {
-
-            }
-        });
-        //下拉刷新
-        mRecyclerView.setOnRefreshListener(new OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                mRecyclerView.refreshComplete(10);
-                mLRecyclerViewAdapter.notifyDataSetChanged();
-            }
-        });
-        //加载更多
-        mRecyclerView.setOnLoadMoreListener(new OnLoadMoreListener() {
-            @Override
-            public void onLoadMore() {
-
-//                if (mCurrentPage < totalPage) {
-//                    // loading data
-//                    requestData();
-//                } else {
-                mRecyclerView.setNoMore(true);
-//                }
-            }
-        });
-        // 网络异常出错代码处理如下：
-        mRecyclerView.setOnNetWorkErrorListener(new OnNetWorkErrorListener() {
-            @Override
-            public void reload() {
-                requestData();
-            }
-        });
+    private void requestData() {
 
         dialog = new ProgressDialog(this);
         dialog.setMessage("正加载");
         dialog.show();
 
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    try {
+                        mailReceivers = MailHelper
+                                .getInstance(MailBoxActivity.this).getAllMail(type);
+                    } catch (MessagingException e) {
+                        e.printStackTrace();
+                        handler.sendEmptyMessage(1);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MailBoxActivity.this, "发生不可预知的致命错误！", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // 去数据库查询
+                        messageids = getAllMessageids();
+                        switch (status) {
+                            case 0://查询全部
+                                getAllMails(mailReceivers);
+                                break;
+                            case 1://查询未读
+                                getNotRead(mailReceivers);
+                                break;
+                            case 2://查询已读
+                                getYesRead(mailReceivers);
+                                break;
+                        }
+                        setLRecycView();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private void requestRData() {
+
+        dialog = new ProgressDialog(this);
+        dialog.setMessage("正加载");
+        dialog.show();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    try {
+                        mailReceivers = MailHelper
+                                .getInstance(MailBoxActivity.this).getAllMail(type);
+                    } catch (MessagingException e) {
+                        e.printStackTrace();
+                        handler.sendEmptyMessage(1);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MailBoxActivity.this, "发生不可预知的致命错误！", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        totalPage = mailReceivers.size();
+                        for (MailReceiver mailReceiver : mailReceivers) {
+//            Email email = new Email();
+                            ItemModel email = new ItemModel();
+                            try {
+                                email.setMessageID(mailReceiver.getMessageID());
+                                email.setFrom(mailReceiver.getFrom());
+                                email.setTo(mailReceiver.getMailAddress("TO"));
+                                email.setCc(mailReceiver.getMailAddress("CC"));
+                                email.setBcc(mailReceiver.getMailAddress("BCC"));
+                                email.setSubject(mailReceiver.getSubject());
+                                email.setSentdata(mailReceiver.getSentData());
+//                email.setContent(mailReceiver.getMailContent());
+                                email.setReplysign(mailReceiver.getReplySign());
+                                email.setHtml(mailReceiver.isHtml());
+                                email.setNews(mailReceiver.isNew());
+                                email.setAttachments(mailReceiver.getAttachments());
+                                email.setCharset(mailReceiver.getCharset());
+                                attachmentsInputStreamsList.add(0, mailReceiver.getAttachmentsInputStreams());
+//                mailslist.add(0, email);
+                                dataList.add(0, email);
+                                handler.sendEmptyMessage(0);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        mDataAdapter.setDataList(dataList);
+                        mRecyclerView.refreshComplete(totalPage);
+                        mLRecyclerViewAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        }).start();
 
     }
 
-    private void requestData() {
-        try {
-            mailReceivers = MailHelper
-                    .getInstance(MailBoxActivity.this).getAllMail(type);
-        } catch (MessagingException e) {
-            e.printStackTrace();
-            handler.sendEmptyMessage(1);
-        }
-        // 去数据库查询
-        messageids = getAllMessageids();
-        switch (status) {
-            case 0://查询全部
-                getAllMails(mailReceivers);
-                break;
-            case 1://查询未读
-                getNotRead(mailReceivers);
-                break;
-            case 2://查询已读
-                getYesRead(mailReceivers);
-                break;
-        }
+    private void setLRecycView() {
+        DividerDecoration divider = new DividerDecoration.Builder(this)
+                .setHeight(R.dimen.default_divider_height)
+                .setColorResource(R.color.split)
+                .build();
+        //mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.addItemDecoration(divider);
 
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+//        //add a HeaderView
+//        View header = LayoutInflater.from(this).inflate(R.layout.sample_header, (ViewGroup) findViewById(android.R.id.content), false);
+//
+//        mLRecyclerViewAdapter.addHeaderView(header);
+//        mLRecyclerViewAdapter.addHeaderView(new SampleHeader(this));
+
+
+        //禁用下拉刷新功能
+        mRecyclerView.setPullRefreshEnabled(true);
+
+        //禁用自动加载更多功能
+        mRecyclerView.setLoadMoreEnabled(false);
+
+        SampleFooter sampleFooter = new SampleFooter(this);
+        sampleFooter.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //TODO 加载更多
+//                ArrayList<ItemModel> dataList = new ArrayList<>();
+//                for (int i = 0; i < 10; i++) {
+//                    ItemModel itemModel = new ItemModel();
+//                    itemModel.title = "item" + (i + mDataAdapter.getItemCount());
+//                    dataList.add(itemModel);
+//                }
+//                mDataAdapter.addAll(dataList);
+            }
+        });
+        //add a FooterView
+        mLRecyclerViewAdapter.addFooterView(sampleFooter);
+
+
+        //删除item
+        mLRecyclerViewAdapter.setOnItemClickListener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+//                mDataAdapter.remove(position);
+                Toast.makeText(MailBoxActivity.this, "不要點我啦...", Toast.LENGTH_SHORT).show();
+            }
+
+        });
+        //下拉刷新
+        mRecyclerView.setOnRefreshListener(new OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                int currentSize = mDataAdapter.getItemCount();
+                requestRData();
+//                ArrayList<ItemModel> dataList = new ArrayList<>();
+//                for (int i = 0; i < 10; i++) {
+//                    ItemModel itemModel = new ItemModel();
+//                    itemModel.title = "item" + i;
+//                    dataList.add(itemModel);
+//                }
+                mDataAdapter.setDataList(dataList);
+                mRecyclerView.refreshComplete(currentSize);
+                mLRecyclerViewAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
     /**
@@ -332,7 +417,7 @@ public class MailBoxActivity extends Activity {
                 email.setBcc(mailReceiver.getMailAddress("BCC"));
                 email.setSubject(mailReceiver.getSubject());
                 email.setSentdata(mailReceiver.getSentData());
-                email.setContent(mailReceiver.getMailContent());
+//                email.setContent(mailReceiver.getMailContent());
                 email.setReplysign(mailReceiver.getReplySign());
                 email.setHtml(mailReceiver.isHtml());
                 email.setNews(mailReceiver.isNew());
@@ -359,31 +444,39 @@ public class MailBoxActivity extends Activity {
     private void getNotRead(List<MailReceiver> mails){
         totalPage = mails.size();
         for (MailReceiver mailReceiver : mails) {
-            Email email = new Email();
+            ItemModel email = new ItemModel();
             try {
-            	if(messageids.contains(mailReceiver.getMessageID())){
-                	continue;
+                if (messageids.contains(mailReceiver.getMessageID())) {
+
+                    email.setMessageID(mailReceiver.getMessageID());
+                    email.setFrom(mailReceiver.getFrom());
+                    email.setTo(mailReceiver.getMailAddress("TO"));
+                    email.setCc(mailReceiver.getMailAddress("CC"));
+                    email.setBcc(mailReceiver.getMailAddress("BCC"));
+                    email.setSubject(mailReceiver.getSubject());
+                    email.setSentdata(mailReceiver.getSentData());
+//                email.setContent(mailReceiver.getMailContent());
+                    email.setReplysign(mailReceiver.getReplySign());
+                    email.setHtml(mailReceiver.isHtml());
+                    email.setNews(mailReceiver.isNew());
+                    email.setAttachments(mailReceiver.getAttachments());
+                    email.setCharset(mailReceiver.getCharset());
+                    attachmentsInputStreamsList.add(0, mailReceiver.getAttachmentsInputStreams());
+                    dataList.add(0, email);
+                    handler.sendEmptyMessage(0);
+                } else {
+                    mRecyclerView.setEmptyView(empty_view);
+                    dialog.dismiss();
                 }
-                email.setMessageID(mailReceiver.getMessageID());
-                email.setFrom(mailReceiver.getFrom());
-                email.setTo(mailReceiver.getMailAddress("TO"));
-                email.setCc(mailReceiver.getMailAddress("CC"));
-                email.setBcc(mailReceiver.getMailAddress("BCC"));
-                email.setSubject(mailReceiver.getSubject());
-                email.setSentdata(mailReceiver.getSentData());
-                email.setContent(mailReceiver.getMailContent());
-                email.setReplysign(mailReceiver.getReplySign());
-                email.setHtml(mailReceiver.isHtml());
-                email.setNews(mailReceiver.isNew());
-                email.setAttachments(mailReceiver.getAttachments());
-                email.setCharset(mailReceiver.getCharset());
-                attachmentsInputStreamsList.add(0,mailReceiver.getAttachmentsInputStreams());
-                mailslist.add(0, email);
-                handler.sendEmptyMessage(0);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-    	}
+        }
+        mDataAdapter = new DataAdapter(this);
+        mDataAdapter.setDataList(dataList);
+
+        mLRecyclerViewAdapter = new LRecyclerViewAdapter(mDataAdapter);
+        mRecyclerView.setAdapter(mLRecyclerViewAdapter);
     }
     
     /**
@@ -392,29 +485,37 @@ public class MailBoxActivity extends Activity {
     private void getYesRead(List<MailReceiver> mails){
         totalPage = mails.size();
         for (MailReceiver mailReceiver : mails) {
-            Email email = new Email();
+            ItemModel email = new ItemModel();
             try {
-            	if(messageids.contains(mailReceiver.getMessageID())){
-            		email.setMessageID(mailReceiver.getMessageID());
+                if (messageids.contains(mailReceiver.getMessageID())) {
+                    email.setMessageID(mailReceiver.getMessageID());
                     email.setFrom(mailReceiver.getFrom());
                     email.setTo(mailReceiver.getMailAddress("TO"));
                     email.setCc(mailReceiver.getMailAddress("CC"));
                     email.setBcc(mailReceiver.getMailAddress("BCC"));
                     email.setSubject(mailReceiver.getSubject());
                     email.setSentdata(mailReceiver.getSentData());
-                    email.setContent(mailReceiver.getMailContent());
+//                    email.setContent(mailReceiver.getMailContent());
                     email.setReplysign(mailReceiver.getReplySign());
                     email.setHtml(mailReceiver.isHtml());
                     email.setNews(mailReceiver.isNew());
                     email.setAttachments(mailReceiver.getAttachments());
                     email.setCharset(mailReceiver.getCharset());
                     attachmentsInputStreamsList.add(0,mailReceiver.getAttachmentsInputStreams());
-                    mailslist.add(0, email);
+                    dataList.add(0, email);
                     handler.sendEmptyMessage(0);
+                } else {
+                    mRecyclerView.setEmptyView(empty_view);
+                    dialog.dismiss();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-    	}
+            mDataAdapter = new DataAdapter(this);
+            mDataAdapter.setDataList(dataList);
+
+            mLRecyclerViewAdapter = new LRecyclerViewAdapter(mDataAdapter);
+            mRecyclerView.setAdapter(mLRecyclerViewAdapter);
+        }
     }
 }

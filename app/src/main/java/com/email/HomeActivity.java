@@ -1,16 +1,12 @@
 package com.email;
-import com.email.app.MyApplication;
-import com.email.utils.EmailFormatUtil;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -20,11 +16,14 @@ import android.view.Window;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ExpandableListView.OnGroupClickListener;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.email.app.MyApplication;
+import com.email.utils.EmailFormatUtil;
 
 public class HomeActivity extends Activity {
 	private ExpandableListView expendView;
@@ -101,7 +100,7 @@ public class HomeActivity extends Activity {
 					intent.putExtra("status", 2);//已读
 					startActivity(intent);
 				}else if(groupPosition==2&&childPosition==3){
-					Toast.makeText(HomeActivity.this, "我是垃圾箱！", Toast.LENGTH_SHORT).show();
+					Toast.makeText(HomeActivity.this, "正在开发中...", Toast.LENGTH_SHORT).show();
 				}
 				adapter.notifyDataSetChanged();
 				return false;

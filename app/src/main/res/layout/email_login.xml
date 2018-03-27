@@ -12,9 +12,9 @@
             android:layout_gravity="center_horizontal" 
             android:id="@+id/logo"
             android:layout_width="wrap_content" 
-            android:layout_height="wrap_content" 
-            android:layout_marginTop="32.0dip" 
-            android:src="@drawable/logo_h40" 
+            android:layout_height="200dp"
+            android:layout_marginTop="20dp"
+            android:src="@drawable/bayes_people"
             android:contentDescription="@string/app_name" />
         <FrameLayout 
             android:layout_gravity="center_horizontal" 
@@ -30,7 +30,7 @@
               android:layout_height="fill_parent" 
               android:hint="@string/emailaddress" 
               android:singleLine="true"
-              android:text="15811555106@163.com"
+              android:text=""
               android:inputType="textEmailAddress" 
               android:imeOptions="actionGo" 
               style="@style/login_field" />
@@ -58,7 +58,7 @@
               android:layout_width="fill_parent" 
               android:layout_height="fill_parent" 
               android:hint="@string/emailpassword"
-              android:text="Qweasd123"
+              android:text=""
               android:singleLine="true" 
               android:inputType="textPassword" 
               android:imeOptions="actionGo" 

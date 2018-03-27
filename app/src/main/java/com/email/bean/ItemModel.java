@@ -1,7 +1,8 @@
 package com.email.bean;
 
 
-import com.android.framewok.bean.Entity;
+
+import com.android.framewok.base.Entity;
 
 import java.util.ArrayList;
 
